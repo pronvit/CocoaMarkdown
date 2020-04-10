@@ -119,13 +119,15 @@ static NSImage* _placeholderImage;
         // Save a reference to the textcontainer
         _textContainer = textContainer;
         
-        // Load the image asynchronously
+		float scale = [[[_imageURL path] stringByDeletingPathExtension] hasSuffix:@"@2x"] ? 2 : 1;
+
+		// Load the image asynchronously
         if (_imageURL.isFileURL) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 
                 NSData* imageData = [NSData dataWithContentsOfURL:_imageURL];
                 if (imageData.length > 0) {
-                    [self setImageWithData:imageData];
+					[self setImageWithData:imageData scale:scale];
                     _isImageLoaded = YES;
                 }
             });
@@ -136,7 +138,7 @@ static NSImage* _placeholderImage;
                 
                 if ((error == nil) && (data.length > 0)) {
                     dispatch_async(dispatch_get_main_queue(), ^{
-                        [self setImageWithData:data];
+						[self setImageWithData:data scale:scale];
                         _isImageLoaded = YES;
                     });
                 }
@@ -165,7 +167,7 @@ static NSImage* _placeholderImage;
     return self.image;
 }
 
-- (void) setImageWithData:(NSData*)imageData
+- (void) setImageWithData:(NSData*)imageData scale:(float)scale
 {
     NSString* imageUti = (__bridge_transfer NSString*) UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, (__bridge CFStringRef)_imageURL.pathExtension, kUTTypeData);
     self.fileType = imageUti;
@@ -174,7 +176,7 @@ static NSImage* _placeholderImage;
     CGSize currentImageSize = self.image.size;
     
 #if TARGET_OS_IPHONE
-    self.image = [UIImage imageWithData: imageData];
+	self.image = [UIImage imageWithData: imageData scale:scale];
 #else
     self.image = [[NSImage alloc] initWithData:imageData];
 #endif
